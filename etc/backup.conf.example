@@ -1,0 +1,41 @@
+# Global Settings File for Adlibre Backup
+#
+# This is an example configuration file. Copy this to backup.conf and adjust
+# the settings to match your environment:
+#
+#   cp backup.conf.example backup.conf
+#   nano backup.conf
+#
+
+LOG_LEVEL=1
+ECHO_LOG='1'
+POOL_NAME='backup'  # this needs to be mounted at root level
+RSYNC_BIN='/usr/bin/rsync'
+RSYNC_ARGS='-a -H -L --numeric-ids --hard-links --compress --delete-after --delete-excluded --inplace'
+
+SSH_USER='root'
+EXCLUDE='/dev /proc /sys /tmp /var/tmp /var/run /selinux /cgroups lost+found /run /lib /var/spool/postfix /var/cache /var/lib/mlocate/'
+INCLUDE=''
+BACKUP_PATHS='/'
+EXPIRY='90' # Default backup expiry (in days)
+SSH_KEY=~root/.ssh/id_rsa.pub
+SNAPSHOT_ON_ERROR=true  # Snapshot after rsync errors
+PRUNE=true  # Prune old expired backup snapshots
+CONCURRENCY=4  # Number of parallel backup jobs
+
+# Monitoring configuration
+MONITOR_ENABLED=true  # true or false
+MONITOR_HOST_CHECK_ENABLED=true  # send a double check. one for the backup host, and one for each host that is backed up.
+MONITOR_HANDLER="$(dirname $0)/../bin/monitor.sh"  # default handler: supports nsca
+
+# Space-separated list of NSCA monitoring servers
+NSCA_SERVERS='monitoring1.example.com monitoring2.example.com'
+NSCA_SERVICE_NAME='backup'  # Service name for NSCA monitoring checks
+
+NSCA_BIN='/usr/sbin/send_nsca'
+NSCA_CFG=/etc/nagios/send_nsca.cfg
+
+# Post-backup hook (executed after all backups complete)
+# Example: Replicate to remote server using syncoid
+BACKUP_POST_HOOK='/usr/sbin/syncoid -r backup/hosts root@remote-backup-server:backup/hosts --compress=lz4'
+# Set to empty to disable: BACKUP_POST_HOOK=''

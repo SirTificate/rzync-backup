@@ -1,0 +1,31 @@
+# Local configuration with sensitive data
+etc/backup.conf
+etc/*.local
+
+# Host-specific data and configurations
+hosts/
+
+# Logs
+*.log
+logs/
+
+# Runtime files
+*.pid
+*.tmp
+/var/run/*.pid
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+.claude/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Backup files
+*.bak

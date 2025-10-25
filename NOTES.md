@@ -1,0 +1,99 @@
+# Development Notes
+
+Development notes for the current Bourne shell implementation.
+
+## Architecture
+
+* Bourne shell - fast prototyping.
+* Cron is used for scheduling daily runs, and executing snapshot prune operations
+* Most scripts perform a single operation on a single host backup
+* 'Runner' scripts perform global operations across multiple host backups
+* **Parallel execution** support via xargs for concurrent backup operations
+
+## Directory Structure
+
+* /backup/
+* /backup/bin/ - program / scripts
+* /backup/etc/ - global config
+* /backup/hosts/ - hosts root
+* /backup/hosts/example.com/ - ZFS subvolume
+* /backup/hosts/example.com/c/ - per host config
+* /backup/hosts/example.com/d/ - data root
+* /backup/hosts/example.com/l/ - per host logs
+
+## How to manage adding and removing hosts
+
+In the case that a host is removed we have three options:
+
+* purge - immediately remove all files and config.
+* expire - stop future backups and expire existing backups in line with retention policy.
+* disable - disable future backups and disable backup pruning.
+
+## Scheduling
+
+Cron is used to schedule the backup runner. It can be be set to run every hour
+or as frequently as required for the backup interval.
+
+## Snapshot / rotation
+
+Snapshots are performed immediately after a successful backup run, or optionally
+when `SNAPSHOT_ON_ERROR=true`.
+
+Snapshot deletion is done in a separate process independently of the backup
+processes (_bin/prune.sh_).
+
+Snapshots are performed on a per host basis.
+
+Partial / failed backups update the current host backup pool, but are not snapshotted
+(unless SNAPSHOT_ON_ERROR=true).
+
+Snapshot expiry is stateful and idempotent. It does not depend on
+being run at the required rotation time. (eg as per Rsnapshot)
+
+If snapshot is not pruned, then snapshots will accumulate indefinitely as frequently
+as backups occur.
+
+## Fork-Specific Features
+
+This ZFS-focused fork includes the following enhancements:
+
+### Parallel Execution
+
+* `backup-runner-parallel.sh` - Executes backups concurrently using xargs
+* Concurrency level configured via `CONCURRENCY` parameter in `etc/backup.conf`
+* Includes automatic replication to remote backup servers using syncoid
+
+### Helper Scripts
+
+* `scan-known-hosts.sh` - Automatically manages SSH host fingerprints for all configured backup hosts
+* `prune_oldest.sh` - Alternative pruning script that removes snapshots older than 4 months
+* `reset-monitoring.sh` - Sends SUCCESS status to monitoring for all hosts (useful after fixing monitoring issues)
+* `debug-nsca.sh` - Diagnostic tool for NSCA connectivity and encryption testing
+
+### Monitoring
+
+* Multiple NSCA server support via `NSCA_SERVERS` (space-separated list)
+* Passive check integration with Nagios/Icinga/CheckMK
+* Service name: Configurable via `NSCA_SERVICE_NAME` in `backup.conf`
+
+### Key Configuration Parameters
+
+* `CONCURRENCY` - Number of parallel backup jobs (default: 4)
+* `MONITOR_ENABLED` - Enable/disable monitoring integration
+* `MONITOR_HOST_CHECK_ENABLED` - Send checks for both backup server and individual hosts
+
+## ZFS Commands (cheat sheet)
+
+    # setup backup zpool, set compression, set dedupe and inherit on backup/hosts
+    # zfs create backup/hosts
+    # zfs set compression=gzip backup
+    # zfs set dedup=on backup
+    # zfs inherit -r compression backup/hosts
+    # zfs inherit -r dedup backup/hosts
+
+    # zfs create backup/hosts/example.com
+    # zfs snapshot backup/hosts/example.com@foo
+    # zfs destroy backup/hosts/example.com@foo
+
+    # replicate to remote server (syncoid)
+    # syncoid -r backup/hosts root@remote-server:backup/hosts --compress=lz4
