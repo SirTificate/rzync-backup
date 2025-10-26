@@ -156,34 +156,31 @@ if [ "$RSYNC_RETVAL" = "0" ] || [ "${SNAPSHOT_ON_ERROR}" == "true" ]; then
 
     if [ "$RSYNC_RETVAL" = "0" ] && [ "$SNAPSHOT_RETVAL" = "0" ]; then
         if [ "$MONITOR_ENABLED" == "true" ]; then
-            $MONITOR_HANDLER "${NSCA_SERVICE_NAME} ${HOST}" 0 "Backup Successful. Runtime ${RUNTIME} seconds."
+            $MONITOR_HANDLER "${NSCA_SERVICE_NAME}" 0 "Backup Successful. Runtime ${RUNTIME} seconds." ${HOST}
             [ "$MONITOR_HOST_CHECK_ENABLED" == "true" ] && $MONITOR_HANDLER "${ANNOTATION}" 0 "Backup Successful. Runtime ${RUNTIME} seconds." ${HOST}
         fi
         logMessage 1 $LOGFILE "Backup Successful. Runtime ${RUNTIME} seconds."
     elif [ "$RSYNC_RETVAL" = "0" ] && [ "$SNAPSHOT_RETVAL" != "0" ]; then
         if [ "$MONITOR_ENABLED" == "true" ]; then
-            $MONITOR_HANDLER "${NSCA_SERVICE_NAME} ${HOST}" 2 "Backup succeeded, but Snapshot Failed"
+            $MONITOR_HANDLER "${NSCA_SERVICE_NAME}" 2 "Backup succeeded, but Snapshot Failed" ${HOST}
         fi
         logMessage 3 $LOGFILE "Backup succeeded, but snapshot ${SNAP_NAME} Failed"
         exit 99
     elif [ "$RSYNC_RETVAL" != "0" ] && [ "$SNAPSHOT_RETVAL" = "0" ] && [ "${SNAPSHOT_ON_ERROR}" == "true" ]; then
         if [ "$MONITOR_ENABLED" == "true" ]; then
             # Downgrade rsync failure error to warning (1) (because SNAPSHOT_ON_ERROR=true)
-            $MONITOR_HANDLER "${NSCA_SERVICE_NAME} ${HOST}" 1 "Backup Failed: ${CMD}. Snapshotted anyway."
+            $MONITOR_HANDLER "${NSCA_SERVICE_NAME}" 1 "Backup Failed: ${CMD}. Snapshotted anyway." ${HOST}
             [ "$MONITOR_HOST_CHECK_ENABLED" == "true" ] && $MONITOR_HANDLER "${ANNOTATION}" 1 "Backup Failed: ${CMD}. Snapshotted anyway." ${HOST}
         fi
         exit 99
     fi
 else
     if [ "$MONITOR_ENABLED" == "true" ]; then
-        $MONITOR_HANDLER "${NSCA_SERVICE_NAME} ${HOST}" 2 "Backup Failed: ${CMD}."
+        $MONITOR_HANDLER "${NSCA_SERVICE_NAME}" 2 "Backup Failed: ${CMD}." ${HOST}
         [ "$MONITOR_HOST_CHECK_ENABLED" == "true" ] && $MONITOR_HANDLER "${ANNOTATION}" 2 "Backup Failed: ${CMD}." ${HOST}
     fi
     logMessage 3 $LOGFILE "Backup Failed: ${CMD}. Rsync exited with ${RSYNC_RETVAL}."
     echo "failed" > $STATUSFILE
     exit 99
 fi
-
-#) 2>&1 1>> ${LOGFILE} | tee -a ${LOGFILE} # stderr to console, stdout&stderr to logfile
-
 exit 0

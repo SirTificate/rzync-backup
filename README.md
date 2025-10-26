@@ -73,33 +73,74 @@ High level installation is as follows:
 ### Detailed: Red Hat / CentOS / EL Installation and ZFS Usage Example
 
 Create _backup_ zpool with dedup and compression.
-
+```bash  
 zpool create -f backup vdb zfs set dedup=on backup zfs set compression=gzip backup  
+```
+
 Install Rzync Backup into root of _backup_ zpool.
+```bash  
+yum -y install git 
+cd /backup && git clone https://github.com/yourusername/rzync-backup.git .  
+```
 
-yum -y install git cd /backup && git clone https://github.com/yourusername/rzync-backup.git .  
-Install NSCA Client (optional) for Nagios / Icinga integration
-
+Install NSCA Client (optional) for Nagios / Icinga / CheckMK integration
+```bash  
 yum -y install nsca-client  
+```
+
+### Detailed: Ubuntu / Debian Installation and ZFS Usage Example
+
+Create _backup_ zpool with dedup and compression.
+```bash  
+zpool create -f backup vdb zfs set dedup=on backup zfs set compression=gzip backup  
+```
+
+Install Rzync Backup into root of _backup_ zpool.
+```bash  
+apt install git 
+cd /backup && git clone https://github.com/yourusername/rzync-backup.git .  
+```
+
+Install NSCA Client (optional) for Nagios / Icinga / CheckMK integration
+```bash  
+apt -y install nsca-client  
+```
+
+
+
 Generate SSH Key, this is used for authentication.
-
+```bash
 ssh-keygen -t rsa -N "" -f ~root/.ssh/id_rsa  
-Add _server.example.com_ host config and copy the SSH Key to host example.com
+```
 
+Add _server.example.com_ host config and copy the SSH Key to host example.com
+```bash
 cd /backup && ./bin/add-host.sh example.com  
+```
+
 Now run the backup
+```bash
 
 ./bin/backup-runner.sh --all  
+```
+
 The output
+```bash
 
-[root@zbackup backup]# ./bin/backup-runner.sh --all Info: Begin backup run of hosts example.com Info: Begining backup of example.com Running: rsync -a --numeric-ids --hard-links --compress --delete-after --delete-excluded --fuzzy --exclude=/dev --exclude=/proc --exclude=/sys --exclude=/tmp --exclude=/var/tmp --exclude=/var/run --exclude=/selinux --exclude=/cgroups --exclude=lost+found root@example.com:'/' /backup/hosts/example.com/d/ Backup Successful. Runtime 1757 seconds.
+[root@zbackup backup] ./bin/backup-runner.sh --all 
+Info: Begin backup run of hosts example.com Info: 
+Begining backup of example.com 
+Running: rsync -a --numeric-ids --hard-links --compress --delete-after --delete-excluded --fuzzy --exclude=/dev --exclude=/proc --exclude=/sys --exclude=/tmp --exclude=/var/tmp --exclude=/var/run --exclude=/selinux --exclude=/cgroups --exclude=lost+found root@example.com:'/' /backup/hosts/example.com/d/ 
+Backup Successful. Runtime 1757 seconds.
 Snapshot example.com@2013-06-14-15:12:39-1371186759 Created Info: Completed backup of example.com
-
+```
 That's it.
 
 Now if you want to schedule daily backups Add the following to your root crontab:
+```bash
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin @daily /backup/bin/backup-runner.sh --all --comment "Backup Daily" && /backup/bin/prune.sh --all
+```
 ## Configuration
 
 ### Global Configuration (etc/backup.conf)

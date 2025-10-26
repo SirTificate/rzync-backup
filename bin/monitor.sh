@@ -45,6 +45,8 @@ function raiseAlert () {
     if [ -f ${NSCA_BIN} ]; then
         # Loop through all configured NSCA servers
         for NSCA_SERVER in $NSCA_SERVERS; do
+#           debug
+#            echo "${4},$1,$2,$3"
             echo "${4},$1,$2,$3" | ${NSCA_BIN} -H ${NSCA_SERVER} \
             -p ${NSCA_PORT} -d "0x2C" -c ${NSCA_CFG};
         done
@@ -53,4 +55,4 @@ function raiseAlert () {
     fi
 }
 
-raiseAlert "$1" "$2" "$3" "$HOST"
+raiseAlert "$1" "$2" "$3" "$4"

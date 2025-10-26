@@ -18,4 +18,4 @@ if [ ! ${HOST} ]; then
     exit 99
 fi
 
-$MONITOR_HANDLER "${ANNOTATION}" 0 "Test Message" ${HOST}
+$MONITOR_HANDLER "${NSCA_SERVICE_NAME}" 0 "${ANNOTATION}" ${HOST}
