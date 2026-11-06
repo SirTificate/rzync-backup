@@ -71,8 +71,8 @@ else
     trap "{ rm -f ${LOCKFILE}; }" EXIT
 fi
 
-three_months_ago=$(date -d "4 months ago" +"%s")
-echo "Unix-Zeitstempel vor 4 Monaten: $three_months_ago"
+four_months_ago=$(date -d "4 months ago" +"%s")
+echo "Unix-Zeitstempel vor 4 Monaten: $four_months_ago"
 
 for HOST in $HOSTS; do
     sourceHostConfig $HOSTS_DIR $HOST
@@ -92,8 +92,14 @@ for HOST in $HOSTS; do
               continue
             fi
 
-            unix_timestamp=$(echo "$snapshot" | awk -F'-' '{print $NF}')
-            if [ $three_months_ago -gt $unix_timestamp ]; then
+            # Snapshot name: YYYY-MM-DD-HH:MM:SS-<epoch>[-partial|-failed]
+            re='-([0-9]{9,})(-partial|-failed)?$'
+            if [[ $(basename "$snapshot") =~ $re ]]; then
+                unix_timestamp=${BASH_REMATCH[1]}
+            else
+                continue
+            fi
+            if [ "$four_months_ago" -gt "$unix_timestamp" ]; then
               logMessage 1 $LOGFILE "Info: Removing snapshot ${snapshot}."
               SNAPSHOT=$(basename $snapshot)
               if [ -n "$DRYRUN" ] ; then
